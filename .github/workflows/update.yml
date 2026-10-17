@@ -8,6 +8,10 @@ on:
         description: Force a new recommendation collection
         type: boolean
         default: false
+      force_game_data:
+        description: Force a new skill and item collection
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -61,5 +65,33 @@ jobs:
           git pull --rebase origin main
           git push
       - name: Report recommendation failure
+        if: steps.collect.outcome == 'failure'
+        run: exit 1
+  game-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Fetch skill and item source when due
+        id: collect
+        continue-on-error: true
+        env:
+          FORCE_GAME_DATA: ${{ inputs.force_game_data }}
+        run: |
+          if [ "$FORCE_GAME_DATA" = "true" ]; then
+            python3 game_data.py --force
+          else
+            python3 game_data.py
+          fi
+      - name: Publish source evidence and status
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/game-data*.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Check Tencent skill and item source'
+          git pull --rebase origin main
+          git push
+      - name: Report source failure
         if: steps.collect.outcome == 'failure'
         run: exit 1

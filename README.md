@@ -17,3 +17,7 @@ The backend checks the small status document and downloads the full payload only
 ## Skill and item change evidence
 
 `game_data.py` checks the complete public champion roster, skill details and item catalog every six hours, with four concurrent requests and an eight-minute deadline. `data/game-data.json` preserves original JSON text, official URLs and checksums. `data/game-data-status.json` reports complete success or failure; partial fetches never replace the last complete bundle. Retrieval clocks are kept outside the content hash. The application validates this evidence, compares changes and alerts administrators. It never automatically overwrites translated descriptions or game formulas. Source file timestamps and versions are preserved and are not claimed as the app patch date. No accounts or private keys are read by this job.
+
+## Matchup win rates
+
+The two-hour recommendation collection also fetches hero_counter_point for every champion. Complete bundles declare matchupVersion=1 and include all original rank/role responses. The application validates IDs, source rates and dates, then shows the five lowest and highest opponent win rates from the selected champion's perspective. Missing scopes are not substituted by other ranks or roles. No votes or member data are used.

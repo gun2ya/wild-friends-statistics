@@ -10,7 +10,7 @@ import urllib.request
 
 BASE = 'https://mlol.qt.qq.com/go/lgame_battle_info/'
 CATALOG = 'https://game.gtimg.cn/images/lgamem/act/lrlib/js/'
-KINDS = ('hero_tech', 'hero_equip_core', 'hero_equip_shoe', 'hero_equip_rune', 'hero_equip_skill')
+KINDS = ('hero_tech', 'hero_equip_core', 'hero_equip_shoe', 'hero_equip_rune', 'hero_equip_skill', 'hero_counter_point')
 INTERVAL = 7200
 MAX_FILE = 2 * 1024 * 1024
 
@@ -31,7 +31,7 @@ def request(url):
             if len(raw) > MAX_FILE:
                 raise ValueError('Response too large')
             obj = json.loads(raw)
-            empty = obj.get('result') == 1000 and obj.get('data') is None and obj.get('msg') == 'no data' and 'hero_equip_' in url
+            empty = obj.get('result') == 1000 and obj.get('data') is None and obj.get('msg') == 'no data' and ('hero_equip_' in url or 'hero_counter_point' in url)
             if '/go/' in url and not empty and (type(obj.get('result')) is not int or obj['result'] != 0):
                 raise ValueError('Unsuccessful source result')
             return {'url': url, 'raw': raw.decode('utf8'), 'sha256': hashlib.sha256(raw).hexdigest()}
@@ -86,7 +86,7 @@ def collect(destination, force=False):
             write(work_file, {'startedAt':cache_start,'records':records})
             raise ValueError('Incomplete recommendations collection')
         # Retrieval clocks are intentionally excluded from the large content hash.
-        bundle = {'formatVersion':1,'champions':ids,'records':records}
+        bundle = {'formatVersion':1,'matchupVersion':1,'champions':ids,'records':records}
         encoded=json.dumps(bundle,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()
         digest=hashlib.sha256(encoded).hexdigest()
         if not bundle_file.exists() or hashlib.sha256(bundle_file.read_bytes()).hexdigest()!=digest:

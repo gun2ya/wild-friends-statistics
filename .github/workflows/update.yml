@@ -15,12 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Fetch and validate original JSON
+        id: fetch
+        continue-on-error: true
         run: python3 fetch.py
       - name: Publish changed data
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add data/hero_rank_list_v2.json
+          git add data/
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Refresh Tencent public statistics'
+          git pull --rebase origin main
           git push
+      - name: Report source failure
+        if: steps.fetch.outcome == 'failure'
+        run: exit 1

@@ -62,7 +62,9 @@ def collect(destination, force=False):
                 query = '?hero_id='+hid+('&mode=classic_model&source_game_zone=lgame&game_zone=lgame' if kind == 'hero_tech' else '')
                 jobs.append((hid+'/'+kind, BASE+kind+query))
         cached = json.loads(work_file.read_text()) if work_file.exists() else {}
-        cached = cached.get('records', {}) if now-cached.get('startedAt', 0) < INTERVAL else {}
+        cache_start = cached.get('startedAt', now)
+        cached = cached.get('records', {}) if now-cache_start < INTERVAL else {}
+        if not cached:cache_start=now
         def run(job):
             key, url = job
             if time.monotonic()-started > 600: return key, None, 'collection deadline'
@@ -78,10 +80,10 @@ def collect(destination, force=False):
                 if error:failures.append({'key':key,'error':error})
                 else:records[key]=value
                 if index % 25 == 0:
-                    write(work_file, {'startedAt':now,'records':records})
+                    write(work_file, {'startedAt':cache_start,'records':records})
                     print('Collected', index+1, '/', len(jobs), 'failures',len(failures),flush=True)
         if failures:
-            write(work_file, {'startedAt':now,'records':records})
+            write(work_file, {'startedAt':cache_start,'records':records})
             raise ValueError('Incomplete recommendations collection')
         # Retrieval clocks are intentionally excluded from the large content hash.
         bundle = {'formatVersion':1,'champions':ids,'records':records}

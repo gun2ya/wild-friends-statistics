@@ -8,16 +8,11 @@ GitHub Actions checks the source every 30 minutes. Failed validation keeps the l
 
 `data/relay.json` records the last source check, checksum and exact original JSON text. A failed fetch publishes an explicit failure status while preserving the last valid raw data file. The app rejects stale relay checks and failure statuses.
 
-## Recommendation feeds
+추천 빌드와 일반 협곡 조합은 loadouts.py가 2시간마다 확인한다. 작은 상태 파일의 해시가 바뀔 때만 서버가 원문 묶음을 다운로드한다. 원문, URL, 해시는 공개 게임 자료에 한해 저장하며 불완전한 수집은 마지막 정상 묶음을 덮지 않는다.
 
-`loadouts.py` checks public normal-mode item/rune/spell combinations and recommended builds every two hours. It uses four workers with a ten-minute collection deadline. The public champion catalog drives coverage. Original response bodies, request URLs and SHA-256 hashes are preserved in `data/loadouts-data.json`; the small `data/loadouts-status.json` reports completion or failure. An incomplete collection preserves the last complete payload and records resumable public responses in `loadouts-work.json`. These feeds contain only public Tencent game data, never Wild Friends member data.
 
-The backend checks the small status document and downloads the full payload only when its hash changes. Missing source data and outdated records are handled separately by the application's validator.
+## Scheduling and recovery
 
-## Skill and item change evidence
+GitHub checks at minute13 and43. Because GitHub scheduled events can be delayed or dropped, Lightsail independently checks the three small relay status files every5minutes. Numeric collection older than35minutes, loadouts older than155minutes, or game data older than395minutes wakes this workflow using a push to the dedicated `refresh-trigger` branch. Failed/invalid status also requests recovery. An active run younger than20minutes and a persisted30minute dispatch cooldown prevent duplicate runs. The source collection itself remains in GitHub; Lightsail never performs the large Tencent collection.
 
-`game_data.py` checks the complete public champion roster, skill details and item catalog every six hours, with four concurrent requests and an eight-minute deadline. `data/game-data.json` preserves original JSON text, official URLs and checksums. `data/game-data-status.json` reports complete success or failure; partial fetches never replace the last complete bundle. Retrieval clocks are kept outside the content hash. The application validates this evidence, compares changes and alerts administrators. It never automatically overwrites translated descriptions or game formulas. Source file timestamps and versions are preserved and are not claimed as the app patch date. No accounts or private keys are read by this job.
-
-## Matchup win rates
-
-The two-hour recommendation collection also fetches hero_counter_point for every champion. Complete bundles declare matchupVersion=1 and include all original rank/role responses. The application validates IDs, source rates and dates, then shows the five lowest and highest opponent win rates from the selected champion's perspective. Missing scopes are not substituted by other ranks or roles. No votes or member data are used.
+The trigger branch contains the unchanged `main` tree, uses an explicit force-with-lease, and never changes `main` or public data. All three jobs explicitly check out `main`. A repository-scoped SSH deploy key is stored only in the Lightsail private directory; no personal GitHub token is copied to the server. The systemd service/timer and Python watchdog sources are maintained in the application repository. See `server/deploy/wf-statistics-watchdog.*` and `ops/tencent-statistics-relay/watchdog.py` there. Restart-persistent state is kept in `/var/lib/wf-statistics-watchdog/state.json`.

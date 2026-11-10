@@ -1,1 +1,1 @@
-{"formatVersion":1,"ok":true,"checkedAt":"2026-11-10T10:15:37.222617+00:00","sha256":"8ea84febc97809ee0ced58bcca4c96a8946a254ea39edbcd820196c828dd2aad","champions":144,"records":1012,"intervalSeconds":7200}
+{"formatVersion":1,"ok":false,"checkedAt":"2026-11-10T12:26:45.318389+00:00","failed":[{"key":"10021/hero_equip_skill","error":"URLError"}],"intervalSeconds":7200}

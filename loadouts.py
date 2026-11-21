@@ -52,7 +52,10 @@ def collect(destination, force=False):
     records = {}; failures = []
     try:
         heroes = request(CATALOG + 'heroList/hero_list.js')
-        ids = sorted(json.loads(heroes['raw'])['heroList'])
+        # Rek'Sai left hero_list.js on 2026-11-21 while its hero_tech API
+        # still returns successfully. Keep querying all seven of its sources.
+        # This preserves the established roster without synthesizing records.
+        ids = sorted(set(json.loads(heroes['raw'])['heroList']) | {'10145'})
         if not 100 <= len(ids) <= 300 or any(not x.isdecimal() for x in ids):
             raise ValueError('Invalid champion catalog')
         records['heroes'] = heroes

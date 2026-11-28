@@ -38,6 +38,11 @@ def normalize_champion_stats(raw,champion,quality,catalog):
 
 def merge_snapshot(previous,incoming):
     out=copy.deepcopy(previous);out.update({k:copy.deepcopy(v)for k,v in incoming.items()if k not in ('champions','championSummaries')})
-    for cid,group in incoming.get('champions',{}).items():out.setdefault('champions',{}).setdefault(cid,{}).setdefault('qualities',{}).update(copy.deepcopy(group.get('qualities',{})))
+    for cid,group in incoming.get('champions',{}).items():
+        qualities=out.setdefault('champions',{}).setdefault(cid,{}).setdefault('qualities',{})
+        for quality,value in group.get('qualities',{}).items():
+            old=qualities.get(quality,{})
+            if old.get('sourceDate')and value.get('sourceDate')and value['sourceDate']<old['sourceDate']:continue
+            qualities[quality]=copy.deepcopy(value)
     out.setdefault('championSummaries',{}).update(copy.deepcopy(incoming.get('championSummaries',{})))
     out['revision']=revision(out);return out
